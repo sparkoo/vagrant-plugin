@@ -1,0 +1,15 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <f:entry title="Vagrantfile path" field="vagrantFile">
+    <f:textbox default=""/>
+  </f:entry>
+  <f:entry title="Vagrant VM name" field="vagrantVm">
+    <f:textbox default=""/>
+  </f:entry>
+  <f:entry title="Command" field="command">
+    <f:textbox default=""/>
+  </f:entry>
+  <f:entry title="Run as root" field="asRoot">
+    <f:checkbox/>
+  </f:entry>
+</j:jelly>
