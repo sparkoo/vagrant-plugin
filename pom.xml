@@ -8,7 +8,7 @@
 
   <groupId>org.jenkins-ci.plugins</groupId>
   <artifactId>vagrant</artifactId>
-  <version>2.3.2</version>
+  <version>1.0.0</version>
   <packaging>hpi</packaging>
 
   <licenses>
@@ -41,4 +41,16 @@
     </pluginRepository>
   </pluginRepositories>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.jenkins-ci.tools</groupId>
+        <artifactId>maven-hpi-plugin</artifactId>
+        <extensions>true</extensions>
+        <configuration>
+          <compatibleSinceVersion>1.0.0</compatibleSinceVersion>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
