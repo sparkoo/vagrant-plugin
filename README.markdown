@@ -20,6 +20,10 @@
 - Add/Remove vagrant box
 - Package a vagrant VM to box
 
+## Disclaimer ##
+#### The original plugin was forked from rtyler's plugin https://github.com/rtyler/vagrant-plugin. ####
+#### The current plugin is NOT backwards compatible ####
+
 ## Copyrights ##
 
    Copyright 2014 MyHeritage LTD
