@@ -90,7 +90,7 @@ public class VagrantUpCommand extends Builder {
     }
 
     if (provider != null && !provider.isEmpty()) {
-      arg.add(provider);
+      arg.add("--provider=" + provider);
     }
 
     if (this.dontKillMe) {
