@@ -24,6 +24,10 @@
 #### The original plugin was forked from rtyler's plugin https://github.com/rtyler/vagrant-plugin. ####
 #### The current plugin is NOT backwards compatible ####
 
+## ChangeLog ##
+
+ - 1.0.2: Fixing argument for "providers" when booting up machine (Fix by [fishcake](https://github.com/fishcake))
+
 ## Copyrights ##
 
    Copyright 2014 MyHeritage LTD
