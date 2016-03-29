@@ -112,9 +112,14 @@ public class VagrantWrapper {
    *
    * @param data
    */
-  public void log(Object data) {
+  public void log(String data) {
     listener.getLogger().print("[ vagrant ]: ");
     listener.getLogger().println(data);
+  }
+
+  public void log(Throwable exception) {
+    listener.getLogger().print("[ vagrant ]: ");
+    exception.printStackTrace(listener.getLogger());
   }
 
   /**

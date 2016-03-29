@@ -89,11 +89,11 @@ public class VagrantSshCommand extends Builder {
       return this.wrapper.executeCommand("ssh", arg);
     } catch (IOException e) {
       wrapper.log("Error starting up vagrant, caught IOException, message: " + e.getMessage());
-      wrapper.log(e.getStackTrace());
+      wrapper.log(e);
       return false;
     } catch (InterruptedException e) {
       wrapper.log("Error starting up vagrant, caught InterruptedException, message: " + e.getMessage());
-      wrapper.log(e.getStackTrace());
+      wrapper.log(e);
       return false;
     }
   }
