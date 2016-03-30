@@ -72,11 +72,11 @@ public class VagrantProvisionCommand extends Builder  {
       return this.wrapper.executeCommand("provision", arg);
     } catch (IOException e) {
       listener.getLogger().println("Error starting up vagrant, caught IOException, message: " + e.getMessage());
-      wrapper.log(e.getStackTrace());
+      wrapper.log(e);
       return false;
     } catch (InterruptedException e) {
       listener.getLogger().println("Error starting up vagrant, caught InterruptedException, message: " + e.getMessage());
-      wrapper.log(e.getStackTrace());
+      wrapper.log(e);
       return false;
     }
 
