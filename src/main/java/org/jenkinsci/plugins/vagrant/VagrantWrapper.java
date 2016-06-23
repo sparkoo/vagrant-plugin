@@ -104,7 +104,7 @@ public class VagrantWrapper {
     } else {
       File file = new File(vagrantFile);
       this.vagrantFileName = file.getName();
-      this.containingFolder = new FilePath(launcher.getChannel(), file.getAbsoluteFile().getParent());
+      this.containingFolder = new FilePath(launcher.getChannel(), file.isAbsolute() ? file.getAbsoluteFile().getParent() : new File(build.getWorkspace().getRemote() + "/" + vagrantFile).getParent());
     }
   }
 
