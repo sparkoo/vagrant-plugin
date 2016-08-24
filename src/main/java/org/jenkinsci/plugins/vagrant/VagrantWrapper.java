@@ -10,6 +10,7 @@ import java.io.File;
 import hudson.Proc;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
+import hudson.remoting.VirtualChannel;
 
 import java.io.IOException;
 import java.util.List;
@@ -29,12 +30,9 @@ public class VagrantWrapper {
   transient private Launcher launcher;
   transient private BuildListener listener;
 
-  private boolean validated;
-
   public VagrantWrapper(String vagrantFile, String vagrantVm) {
     this.vagrantFile = vagrantFile;
     this.vagrantVm = vagrantVm;
-    this.validated = false;
   }
 
   /**
@@ -97,15 +95,30 @@ public class VagrantWrapper {
   /**
    *
    */
-  protected void parseVagrantEnvironment() {
+  protected boolean parseVagrantEnvironment() {
     if (this.vagrantFile == null) {
       this.vagrantFileName = "Vagrantfile";
       this.containingFolder = build.getWorkspace();
     } else {
       File file = new File(vagrantFile);
       this.vagrantFileName = file.getName();
-      this.containingFolder = new FilePath(launcher.getChannel(), file.isAbsolute() ? file.getAbsoluteFile().getParent() : new File(build.getWorkspace().getRemote() + "/" + vagrantFile).getParent());
+      VirtualChannel vc = launcher.getChannel();
+      String folderPath;
+      if (file.isAbsolute()) {
+        folderPath = file.getAbsoluteFile().getParent();
+      } else {
+        FilePath workspace = build.getWorkspace();
+        if (workspace == null) {
+          return false;
+        }
+        folderPath = new File(workspace.getRemote() + "/" + vagrantFile).getParent();
+      }
+      if (vc == null) {
+        return false;
+      }
+      this.containingFolder = new FilePath(vc, folderPath);
     }
+    return true;
   }
 
   /**
@@ -134,9 +147,7 @@ public class VagrantWrapper {
   protected Boolean executeCommand(String command, List<String> args, Map<String, String> additionalEnvVars) throws IOException, InterruptedException {
     TreeMap<String,String> joinedEnvVars = new TreeMap<String, String>();
 
-    if (!this.validated) {
-      this.validate();
-    }
+    this.validate();
 
     joinedEnvVars.putAll(build.getEnvironment(listener));
     if (additionalEnvVars != null) {
@@ -185,8 +196,9 @@ public class VagrantWrapper {
    * @throws InterruptedException
    */
   private Boolean validate() throws IOException, InterruptedException{
-    if (this.vagrantFileName == null || this.containingFolder == null) {
-      this.parseVagrantEnvironment();
+    if (!this.parseVagrantEnvironment()) {
+      listener.getLogger().println("Error parsing environment");
+      return false;
     }
 
     List<FilePath> dirList = this.containingFolder.list();
