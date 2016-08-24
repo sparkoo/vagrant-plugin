@@ -22,7 +22,7 @@
   </properties>
   <groupId>org.jenkins-ci.plugins</groupId>
   <artifactId>vagrant</artifactId>
-  <version>1.0.2</version>
+  <version>1.0.3-SNAPSHOT</version>
   <packaging>hpi</packaging>
 
   <name>vagrant</name>
@@ -63,7 +63,7 @@
     <connection>scm:git:ssh://github.com/jenkinsci/vagrant-plugin.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/jenkinsci/vagrant-plugin.git</developerConnection>
     <url>https://github.com/jenkinsci/vagrant-plugin</url>
-    <tag>vagrant-1.0.2</tag>
+    <tag>vagrant-1.0.3</tag>
   </scm>
 
   <build>
