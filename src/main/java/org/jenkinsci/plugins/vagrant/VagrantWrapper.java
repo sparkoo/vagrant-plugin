@@ -60,22 +60,25 @@ public class VagrantWrapper {
 
   static VagrantWrapper createVagrantWrapper(String vagrantFile, String vagrantVm, AbstractBuild build,
                                              Launcher launcher, BuildListener listener) {
-    String vagrantFileToUse = vagrantFile;
-    String vagrantVmToUse = vagrantVm;
+    final String vagrantFileToUse;
+    final String vagrantVmToUse;
 
     VagrantBuildSettings globalSettings = extractSettingsFromBuild(build);
-    if (globalSettings != null) {
-      if (isEmptyOrNull(vagrantFileToUse) && !isEmptyOrNull(globalSettings.getVagrantFile())) {
+    if (globalSettings == null) {
+      vagrantFileToUse = vagrantFile;
+      vagrantVmToUse = vagrantVm;
+    } else {
+      if (!isEmptyOrNull(vagrantFile)) {
+        vagrantFileToUse = vagrantFile;
+      } else {
         vagrantFileToUse = globalSettings.getVagrantFile();
       }
 
-      if (isEmptyOrNull(vagrantVmToUse) && !isEmptyOrNull(globalSettings.getVagrantVm())) {
+      if (!isEmptyOrNull(vagrantVm)) {
+        vagrantVmToUse = vagrantVm;
+      } else {
         vagrantVmToUse = globalSettings.getVagrantVm();
       }
-    }
-
-    if (isEmptyOrNull(vagrantFileToUse)) {
-      throw new RuntimeException("Vagrantfile is not specified");
     }
 
     return new VagrantWrapper(vagrantFileToUse, vagrantVmToUse, build, launcher, listener);
