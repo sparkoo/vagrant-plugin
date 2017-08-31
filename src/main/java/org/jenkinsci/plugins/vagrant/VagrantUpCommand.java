@@ -25,16 +25,8 @@ public class VagrantUpCommand extends Builder {
   private final String vagrantVm;
   private final boolean destroyOnError;
   private final String provider;
-
-  public boolean isDontKillMe() {
-    return dontKillMe;
-  }
-
-  public void setDontKillMe(boolean dontKillMe) {
-    this.dontKillMe = dontKillMe;
-  }
-
-  private boolean dontKillMe;
+  private final boolean dontKillMe;
+  private boolean dontProvision;
 
   @SuppressWarnings("WeakerAccess")
   @Extension
@@ -42,12 +34,13 @@ public class VagrantUpCommand extends Builder {
 
   @DataBoundConstructor
   public VagrantUpCommand(String vagrantFile, String vagrantVm, boolean destroyOnError, String provider, boolean
-          dontKillMe) {
+          dontKillMe, boolean dontProvision) {
     this.vagrantFile = vagrantFile;
     this.vagrantVm = vagrantVm;
     this.destroyOnError = destroyOnError;
     this.provider = provider;
     this.dontKillMe = dontKillMe;
+    this.dontProvision = dontProvision;
   }
 
   public boolean isDestroyOnError() {
@@ -64,6 +57,18 @@ public class VagrantUpCommand extends Builder {
 
   public String getVagrantVm() {
     return vagrantVm;
+  }
+
+  public boolean isDontKillMe() {
+    return dontKillMe;
+  }
+
+  public boolean isDontProvision() {
+    return dontProvision;
+  }
+
+  public void setDontProvision(boolean dontProvision) {
+    this.dontProvision = dontProvision;
   }
 
   @Override
@@ -89,6 +94,10 @@ public class VagrantUpCommand extends Builder {
 
     if (this.dontKillMe) {
       additionalVars.put("BUILD_ID", "dontKillMe");
+    }
+
+    if (this.dontProvision) {
+      arg.add("--no-provision");
     }
 
     try {

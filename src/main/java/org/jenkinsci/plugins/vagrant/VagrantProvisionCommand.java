@@ -1,8 +1,8 @@
 package org.jenkinsci.plugins.vagrant;
 
 /**
- * Created by elad on 9/18/14.
- */
+* Created by elad on 9/18/14.
+*/
 
 import hudson.Launcher;
 import hudson.Extension;
@@ -22,6 +22,10 @@ public class VagrantProvisionCommand extends Builder {
   private final String vagrantVm;
   private final String provisioners;
   private final boolean parallel;
+
+  @SuppressWarnings("WeakerAccess")
+  @Extension
+  public static final VagrantProvisionCommandDescriptor DESCRIPTOR = new VagrantProvisionCommandDescriptor();
 
   @DataBoundConstructor
   public VagrantProvisionCommand(String vagrantFile, String vagrantVm, String provisioners, boolean parallel) {
@@ -49,7 +53,7 @@ public class VagrantProvisionCommand extends Builder {
 
   @Override
   public BuildStepDescriptor<Builder> getDescriptor() {
-    return new VagrantProvisionCommandDescriptor();
+    return DESCRIPTOR;
   }
 
   public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
