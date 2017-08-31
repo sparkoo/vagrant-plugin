@@ -15,17 +15,15 @@ import java.io.IOException;
 public class VagrantBuildSettings extends BuildWrapper {
     private final String vagrantFile;
     private final String vagrantVm;
-    private final boolean destroyAfterBuild;
 
     @SuppressWarnings("WeakerAccess")
     @Extension
     public static final BuildWrapperDescriptor DESCRIPTOR = new DescriptorImpl();
 
     @DataBoundConstructor
-    public VagrantBuildSettings(String vagrantFile, String vagrantVm, boolean destroyAfterBuild) {
+    public VagrantBuildSettings(String vagrantFile, String vagrantVm) {
         this.vagrantFile = vagrantFile;
         this.vagrantVm = vagrantVm;
-        this.destroyAfterBuild = destroyAfterBuild;
     }
 
     @Override
@@ -40,10 +38,6 @@ public class VagrantBuildSettings extends BuildWrapper {
 
     public String getVagrantVm() {
         return vagrantVm;
-    }
-
-    public boolean isDestroyAfterBuild() {
-        return destroyAfterBuild;
     }
 
     @Override
@@ -71,11 +65,6 @@ public class VagrantBuildSettings extends BuildWrapper {
 
         @Override
         public boolean tearDown(AbstractBuild build, BuildListener listener) throws IOException, InterruptedException {
-            if (isDestroyAfterBuild()) {
-                VagrantWrapper wrapper = VagrantWrapper.createVagrantWrapper(vagrantFile, vagrantVm, build, null, listener);
-                return new PerformVagrantDestroy().performVagrantVmDestroy(wrapper);
-
-            }
             return true;
         }
     }
