@@ -22,28 +22,21 @@ import java.util.TreeMap;
 public class VagrantUpCommand extends Builder {
 
   private boolean destroyOnError;
+  private boolean dontKillMe;
+  private boolean dontProvision;
   private String provider;
   private VagrantWrapper wrapper;
-
-  public boolean isDontKillMe() {
-    return dontKillMe;
-  }
-
-  public void setDontKillMe(boolean dontKillMe) {
-    this.dontKillMe = dontKillMe;
-  }
-
-  private boolean dontKillMe;
 
   @Extension
   public static final VagrantUpCommandDescriptor DESCRIPTOR = new VagrantUpCommandDescriptor();
 
   @DataBoundConstructor
-  public VagrantUpCommand(String vagrantFile, String vagrantVm, boolean destroyOnError, String provider, boolean dontKillMe) {
+  public VagrantUpCommand(String vagrantFile, String vagrantVm, boolean destroyOnError, String provider, boolean dontKillMe, boolean dontProvision) {
     this.wrapper = new VagrantWrapper(vagrantFile, vagrantVm);
     this.destroyOnError = destroyOnError;
     this.provider = provider;
     this.dontKillMe = dontKillMe;
+    this.dontProvision = dontProvision;
   }
 
   public boolean isDestroyOnError() {
@@ -68,6 +61,22 @@ public class VagrantUpCommand extends Builder {
 
   public String getVagrantVm() {
     return this.wrapper.getVagrantVm();
+  }
+
+  public boolean isDontKillMe() {
+    return dontKillMe;
+  }
+
+  public void setDontKillMe(boolean dontKillMe) {
+    this.dontKillMe = dontKillMe;
+  }
+
+  public boolean isDontProvision() {
+    return dontProvision;
+  }
+
+  public void setDontProvision(boolean dontProvision) {
+    this.dontProvision = dontProvision;
   }
 
   @Override
@@ -95,6 +104,10 @@ public class VagrantUpCommand extends Builder {
 
     if (this.dontKillMe) {
       additinalVars.put("BUILD_ID", "dontKillMe");
+    }
+
+    if (this.dontProvision) {
+      arg.add("--no-provision");
     }
 
     try {
