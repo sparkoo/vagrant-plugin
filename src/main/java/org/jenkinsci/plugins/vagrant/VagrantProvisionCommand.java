@@ -24,6 +24,9 @@ public class VagrantProvisionCommand extends Builder  {
 
   private VagrantWrapper wrapper;
 
+  @Extension
+  public static final VagrantProvisionCommandDescriptor DESCRIPTOR = new VagrantProvisionCommandDescriptor();
+
   @DataBoundConstructor
   public VagrantProvisionCommand(String vagrantFile, String vagrantVm, String provisioners, boolean parallel) {
     this.wrapper = new VagrantWrapper(vagrantFile, vagrantVm);
@@ -41,7 +44,6 @@ public class VagrantProvisionCommand extends Builder  {
 
   public String getVagrantFile() {
     return wrapper.getVagrantFile();
-
   }
 
   public String getVagrantVm() {
@@ -50,7 +52,7 @@ public class VagrantProvisionCommand extends Builder  {
 
   @Override
   public BuildStepDescriptor<Builder> getDescriptor() {
-    return new VagrantProvisionCommandDescriptor();
+    return DESCRIPTOR;
   }
 
   public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
