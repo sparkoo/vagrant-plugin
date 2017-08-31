@@ -6,10 +6,13 @@ package org.jenkinsci.plugins.vagrant;
 
 import hudson.FilePath;
 import hudson.Launcher;
+
 import java.io.File;
+
 import hudson.Proc;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
+import hudson.model.Environment;
 import hudson.remoting.VirtualChannel;
 
 import java.io.IOException;
@@ -35,74 +38,88 @@ public class VagrantWrapper {
     this.vagrantVm = vagrantVm;
   }
 
-  /**
-   *
-   * @return
-   */
+  public VagrantWrapper(String vagrantFile, String vagrantVm, AbstractBuild build, Launcher launcher, BuildListener
+          listener) {
+    this.vagrantFile = vagrantFile;
+    this.vagrantVm = vagrantVm;
+    this.build = build;
+    this.launcher = launcher;
+    this.listener = listener;
+  }
+
+  private static VagrantBuildSettings extractSettingsFromBuild(AbstractBuild build) {
+    for (Environment e : build.getEnvironments()) {
+      if (e instanceof VagrantBuildSettings.VagrantBuildSettingsEnvironment) {
+        VagrantBuildSettings.VagrantBuildSettingsEnvironment env = (VagrantBuildSettings
+                .VagrantBuildSettingsEnvironment) e;
+        return env.getBuildSettings();
+      }
+    }
+    return null;
+  }
+
+  static VagrantWrapper createVagrantWrapper(String vagrantFile, String vagrantVm, AbstractBuild build,
+                                             Launcher launcher, BuildListener listener) {
+    String vagrantFileToUse = vagrantFile;
+    String vagrantVmToUse = vagrantVm;
+
+    VagrantBuildSettings globalSettings = extractSettingsFromBuild(build);
+    if (globalSettings != null) {
+      if (isEmptyOrNull(vagrantFileToUse) && !isEmptyOrNull(globalSettings.getVagrantFile())) {
+        vagrantFileToUse = globalSettings.getVagrantFile();
+      }
+
+      if (isEmptyOrNull(vagrantVmToUse) && !isEmptyOrNull(globalSettings.getVagrantVm())) {
+        vagrantVmToUse = globalSettings.getVagrantVm();
+      }
+    }
+
+    if (isEmptyOrNull(vagrantFileToUse)) {
+      throw new RuntimeException("Vagrantfile is not specified");
+    }
+
+    return new VagrantWrapper(vagrantFileToUse, vagrantVmToUse, build, launcher, listener);
+  }
+
+  private static boolean isEmptyOrNull(String vagrantFile) {
+    return vagrantFile == null || vagrantFile.isEmpty();
+  }
+
   public String getVagrantFileName() {
     return this.vagrantFileName;
   }
 
-  /**
-   *
-   * @param build
-   */
   public void setBuild(AbstractBuild build) {
     this.build = build;
   }
 
-  /**
-   *
-   * @param launcher
-   */
   public void setLauncher(Launcher launcher) {
     this.launcher = launcher;
   }
 
-  /**
-   *
-   * @param listener
-   */
-  public void setListener(BuildListener listener) {
+  void setListener(BuildListener listener) {
     this.listener = listener;
   }
 
-  /**
-   *
-   * @return
-   */
-
-  public FilePath getContainingFolder() {
+  private FilePath getContainingFolder() {
     return this.containingFolder;
   }
 
-  /**
-   *
-   * @return
-   */
   public String getVagrantFile() {
     return this.vagrantFile;
   }
 
-  /**
-   *
-   * @return
-   */
   public String getVagrantVm() {
     return this.vagrantVm;
   }
 
-  /**
-   *
-   */
-  protected boolean parseVagrantEnvironment() {
+  private boolean parseVagrantEnvironment() {
     if (this.vagrantFile == null) {
       this.vagrantFileName = "Vagrantfile";
       this.containingFolder = build.getWorkspace();
     } else {
       File file = new File(vagrantFile);
       this.vagrantFileName = file.getName();
-      VirtualChannel vc = launcher.getChannel();
       String folderPath;
       if (file.isAbsolute()) {
         folderPath = file.getAbsoluteFile().getParent();
@@ -113,6 +130,8 @@ public class VagrantWrapper {
         }
         folderPath = new File(workspace.getRemote() + "/" + vagrantFile).getParent();
       }
+
+      VirtualChannel vc = launcher.getChannel();
       if (vc == null) {
         return false;
       }
@@ -121,10 +140,6 @@ public class VagrantWrapper {
     return true;
   }
 
-  /**
-   *
-   * @param data
-   */
   public void log(String data) {
     listener.getLogger().print("[ vagrant ]: ");
     listener.getLogger().println(data);
@@ -135,17 +150,9 @@ public class VagrantWrapper {
     exception.printStackTrace(listener.getLogger());
   }
 
-  /**
-   *
-   * @param command
-   * @param args
-   * @param additionalEnvVars
-   * @return
-   * @throws IOException
-   * @throws InterruptedException
-   */
-  protected Boolean executeCommand(String command, List<String> args, Map<String, String> additionalEnvVars) throws IOException, InterruptedException {
-    TreeMap<String,String> joinedEnvVars = new TreeMap<String, String>();
+  Boolean executeCommand(String command, List<String> args, Map<String, String> additionalEnvVars) throws
+          IOException, InterruptedException {
+    TreeMap<String, String> joinedEnvVars = new TreeMap<String, String>();
 
     this.validate();
 
@@ -177,25 +184,11 @@ public class VagrantWrapper {
     return true;
   }
 
-  /**
-   *
-   * @param command
-   * @param args
-   * @return
-   * @throws IOException
-   * @throws InterruptedException
-   */
-  protected Boolean executeCommand(String command, List<String> args) throws IOException, InterruptedException {
+  Boolean executeCommand(String command, List<String> args) throws IOException, InterruptedException {
     return this.executeCommand(command, args, null);
   }
 
-  /**
-   *
-   * @return
-   * @throws IOException
-   * @throws InterruptedException
-   */
-  private Boolean validate() throws IOException, InterruptedException{
+  private Boolean validate() throws IOException, InterruptedException {
     if (!this.parseVagrantEnvironment()) {
       listener.getLogger().println("Error parsing environment");
       return false;
@@ -210,14 +203,15 @@ public class VagrantWrapper {
     ListIterator i = dirList.listIterator();
     Boolean error_found = false;
     while (i.hasNext()) {
-      FilePath file = (FilePath)i.next();
+      FilePath file = (FilePath) i.next();
       if (file.getName().equals(this.vagrantFileName)) {
         error_found = false;
         break;
       }
     }
     if (error_found) {
-      listener.getLogger().println("Failed to find Vagrantfile \"" + this.vagrantFileName + "\" in folder \"" + this.containingFolder.getRemote());
+      listener.getLogger().println("Failed to find Vagrantfile \"" + this.vagrantFileName + "\" in folder \"" + this
+              .containingFolder.getRemote());
       return false;
     }
 

@@ -1,8 +1,8 @@
 package org.jenkinsci.plugins.vagrant;
 
 /**
-* Created by elad on 9/18/14.
-*/
+ * Created by elad on 9/18/14.
+ */
 
 import hudson.Launcher;
 import hudson.Extension;
@@ -17,16 +17,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VagrantProvisionCommand extends Builder  {
-
+public class VagrantProvisionCommand extends Builder {
+  private final String vagrantFile;
+  private final String vagrantVm;
   private final String provisioners;
   private final boolean parallel;
 
-  private VagrantWrapper wrapper;
-
   @DataBoundConstructor
   public VagrantProvisionCommand(String vagrantFile, String vagrantVm, String provisioners, boolean parallel) {
-    this.wrapper = new VagrantWrapper(vagrantFile, vagrantVm);
+    this.vagrantFile = vagrantFile;
+    this.vagrantVm = vagrantVm;
     this.parallel = parallel;
     this.provisioners = provisioners;
   }
@@ -40,12 +40,11 @@ public class VagrantProvisionCommand extends Builder  {
   }
 
   public String getVagrantFile() {
-    return wrapper.getVagrantFile();
-
+    return vagrantFile;
   }
 
   public String getVagrantVm() {
-    return this.wrapper.getVagrantVm();
+    return vagrantVm;
   }
 
   @Override
@@ -54,28 +53,26 @@ public class VagrantProvisionCommand extends Builder  {
   }
 
   public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
-    this.wrapper.setBuild(build);
-    this.wrapper.setLauncher(launcher);
-    this.wrapper.setListener(listener);
-    List<String> arg = new ArrayList<String>();
+    VagrantWrapper wrapper = VagrantWrapper.createVagrantWrapper(vagrantFile, vagrantVm, build, launcher, listener);
 
+    List<String> arg = new ArrayList<>();
     if (parallel) {
       arg.add("--parallel");
     }
-
     if (provisioners != null && !provisioners.isEmpty()) {
       arg.add("--provision-with");
       arg.add(provisioners);
     }
 
     try {
-      return this.wrapper.executeCommand("provision", arg);
+      return wrapper.executeCommand("provision", arg);
     } catch (IOException e) {
       listener.getLogger().println("Error starting up vagrant, caught IOException, message: " + e.getMessage());
       wrapper.log(e);
       return false;
     } catch (InterruptedException e) {
-      listener.getLogger().println("Error starting up vagrant, caught InterruptedException, message: " + e.getMessage());
+      listener.getLogger().println("Error starting up vagrant, caught InterruptedException, message: " + e.getMessage
+              ());
       wrapper.log(e);
       return false;
     }

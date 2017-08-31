@@ -19,23 +19,25 @@ import java.util.List;
  * Destroy Vagrant VM in Post-build actions.
  */
 public class VagrantDestroyPostCommand extends Recorder {
-  private VagrantWrapper wrapper;
+  private final String vagrantFile;
+  private final String vagrantVm;
 
+  @SuppressWarnings("WeakerAccess")
   @Extension
   public static final VagrantDestroyCommandDescriptor DESCRIPTOR = new VagrantDestroyCommandDescriptor();
 
   @DataBoundConstructor
   public VagrantDestroyPostCommand(String vagrantFile, String vagrantVm) {
-    this.wrapper = new VagrantWrapper(vagrantFile, vagrantVm);
+    this.vagrantFile = vagrantFile;
+    this.vagrantVm = vagrantVm;
   }
 
   public String getVagrantFile() {
-
-    return wrapper.getVagrantFile();
+    return vagrantFile;
   }
 
   public String getVagrantVm() {
-    return this.wrapper.getVagrantVm();
+    return vagrantVm;
   }
 
   @Override
@@ -44,24 +46,8 @@ public class VagrantDestroyPostCommand extends Recorder {
   }
 
   public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
-    this.wrapper.setBuild(build);
-    this.wrapper.setLauncher(launcher);
-    this.wrapper.setListener(listener);
-    List<String> arg = new ArrayList<String>();
-
-    arg.add("--force");
-
-    try {
-      return this.wrapper.executeCommand("destroy", arg);
-    } catch (IOException e) {
-      wrapper.log("Error starting up vagrant, caught IOException, message: " + e.getMessage());
-      wrapper.log(e);
-      return false;
-    } catch (InterruptedException e) {
-      wrapper.log("Error starting up vagrant, caught InterruptedException, message: " + e.getMessage());
-      wrapper.log(e);
-      return false;
-    }
+    VagrantWrapper wrapper = VagrantWrapper.createVagrantWrapper(vagrantFile, vagrantVm, build, launcher, listener);
+    return new PerformVagrantDestroy().performVagrantVmDestroy(wrapper);
   }
 
   @Override
