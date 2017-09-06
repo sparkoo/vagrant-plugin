@@ -17,65 +17,42 @@ import java.util.List;
  * Created by elad on 10/13/14.
  */
 public class VagrantSshCommand extends Builder {
-
-  private String command;
-  private boolean asRoot;
-  private VagrantWrapper wrapper;
+  private final String vagrantFile;
+  private final String vagrantVm;
+  private final String command;
+  private final boolean asRoot;
 
   @DataBoundConstructor
   public VagrantSshCommand(String vagrantFile, String vagrantVm, String command, boolean asRoot) {
-    this.wrapper = new VagrantWrapper(vagrantFile, vagrantVm);
+    this.vagrantFile = vagrantFile;
+    this.vagrantVm = vagrantVm;
     this.command = command;
     this.asRoot = asRoot;
   }
 
-  /**
-   *
-   * @return
-   */
   public String getCommand() {
     return command;
   }
 
-  /**
-   *
-   * @param command
-   */
-  public void setCommand(String command) {
-    this.command = command;
-  }
-
-  /**
-   *
-   * @return
-   */
   public boolean isAsRoot() {
     return asRoot;
   }
 
-  /**
-   *
-   * @param asRoot
-   */
-  public void setAsRoot(boolean asRoot) {
-    this.asRoot = asRoot;
-  }
-
   public String getVagrantFile() {
-    return wrapper.getVagrantFile();
+    return vagrantFile;
   }
 
   public String getVagrantVm() {
-    return this.wrapper.getVagrantVm();
+    return vagrantVm;
   }
 
+  @SuppressWarnings("WeakerAccess")
   @Extension
   public static final VagrantSshCommandDescriptor DESCRIPTOR = new VagrantSshCommandDescriptor();
 
   public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
-    this.wrapper.setBuild(build);
-    this.wrapper.setLauncher(launcher);
-    this.wrapper.setListener(listener);
+    VagrantWrapper wrapper = VagrantWrapper.createVagrantWrapper(vagrantFile, vagrantVm, build, launcher, listener);
+
     List<String> arg = new ArrayList<String>();
 
     arg.add("--command");
@@ -86,7 +63,7 @@ public class VagrantSshCommand extends Builder {
     }
 
     try {
-      return this.wrapper.executeCommand("ssh", arg);
+      return wrapper.executeCommand("ssh", arg);
     } catch (IOException e) {
       wrapper.log("Error starting up vagrant, caught IOException, message: " + e.getMessage());
       wrapper.log(e);

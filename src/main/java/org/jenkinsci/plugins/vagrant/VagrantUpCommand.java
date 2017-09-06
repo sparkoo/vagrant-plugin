@@ -7,6 +7,7 @@ package org.jenkinsci.plugins.vagrant;
 import hudson.Launcher;
 import hudson.Extension;
 import hudson.model.Descriptor;
+import hudson.model.Environment;
 import hudson.tasks.Builder;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
@@ -20,19 +21,22 @@ import java.util.TreeMap;
 
 
 public class VagrantUpCommand extends Builder {
-
-  private boolean destroyOnError;
-  private boolean dontKillMe;
+  private final String vagrantFile;
+  private final String vagrantVm;
+  private final boolean destroyOnError;
+  private final String provider;
+  private final boolean dontKillMe;
   private boolean dontProvision;
-  private String provider;
-  private VagrantWrapper wrapper;
 
+  @SuppressWarnings("WeakerAccess")
   @Extension
   public static final VagrantUpCommandDescriptor DESCRIPTOR = new VagrantUpCommandDescriptor();
 
   @DataBoundConstructor
-  public VagrantUpCommand(String vagrantFile, String vagrantVm, boolean destroyOnError, String provider, boolean dontKillMe, boolean dontProvision) {
-    this.wrapper = new VagrantWrapper(vagrantFile, vagrantVm);
+  public VagrantUpCommand(String vagrantFile, String vagrantVm, boolean destroyOnError, String provider, boolean
+          dontKillMe, boolean dontProvision) {
+    this.vagrantFile = vagrantFile;
+    this.vagrantVm = vagrantVm;
     this.destroyOnError = destroyOnError;
     this.provider = provider;
     this.dontKillMe = dontKillMe;
@@ -43,32 +47,20 @@ public class VagrantUpCommand extends Builder {
     return destroyOnError;
   }
 
-  public void setDestroyOnError(boolean destroyOnError) {
-    this.destroyOnError = destroyOnError;
-  }
-
   public String getProvider() {
     return provider;
   }
 
-  public void setProvider(String provider) {
-    this.provider = provider;
-  }
-
   public String getVagrantFile() {
-    return wrapper.getVagrantFile();
+    return vagrantFile;
   }
 
   public String getVagrantVm() {
-    return this.wrapper.getVagrantVm();
+    return vagrantVm;
   }
 
   public boolean isDontKillMe() {
     return dontKillMe;
-  }
-
-  public void setDontKillMe(boolean dontKillMe) {
-    this.dontKillMe = dontKillMe;
   }
 
   public boolean isDontProvision() {
@@ -85,14 +77,12 @@ public class VagrantUpCommand extends Builder {
     return DESCRIPTOR;
   }
 
-
   public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
-    TreeMap<String, String> additinalVars = new TreeMap<String, String>();
+    TreeMap<String, String> additionalVars = new TreeMap<>();
 
-    this.wrapper.setBuild(build);
-    this.wrapper.setLauncher(launcher);
-    this.wrapper.setListener(listener);
-    List<String> arg = new ArrayList<String>();
+    VagrantWrapper wrapper = VagrantWrapper.createVagrantWrapper(vagrantFile, vagrantVm, build, launcher, listener);
+
+    List<String> arg = new ArrayList<>();
 
     if (destroyOnError) {
       arg.add("--destroy-on-error");
@@ -103,7 +93,7 @@ public class VagrantUpCommand extends Builder {
     }
 
     if (this.dontKillMe) {
-      additinalVars.put("BUILD_ID", "dontKillMe");
+      additionalVars.put("BUILD_ID", "dontKillMe");
     }
 
     if (this.dontProvision) {
@@ -111,7 +101,7 @@ public class VagrantUpCommand extends Builder {
     }
 
     try {
-      return this.wrapper.executeCommand("up", arg, additinalVars);
+      return wrapper.executeCommand("up", arg, additionalVars);
     } catch (IOException e) {
       wrapper.log("Error starting up vagrant, caught IOException, message: " + e.getMessage());
       wrapper.log(e);
@@ -125,17 +115,10 @@ public class VagrantUpCommand extends Builder {
 
   public static final class VagrantUpCommandDescriptor extends Descriptor<Builder> {
 
-    /**
-     * Default constructor
-     */
     public VagrantUpCommandDescriptor() {
       load();
     }
 
-    /**
-     *
-     * @return
-     */
     public String getDisplayName() {
       return "Boot up Vagrant VM";
     }
