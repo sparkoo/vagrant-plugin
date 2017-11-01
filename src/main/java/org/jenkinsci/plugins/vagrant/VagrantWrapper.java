@@ -16,6 +16,7 @@ import hudson.model.Environment;
 import hudson.remoting.VirtualChannel;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -155,25 +156,18 @@ public class VagrantWrapper {
 
   Boolean executeCommand(String command, List<String> args, Map<String, String> additionalEnvVars) throws
           IOException, InterruptedException {
-    TreeMap<String, String> joinedEnvVars = new TreeMap<String, String>();
-
     this.validate();
 
-    joinedEnvVars.putAll(build.getEnvironment(listener));
+    TreeMap<String, String> joinedEnvVars = new TreeMap<>(build.getEnvironment(listener));
     if (additionalEnvVars != null) {
       joinedEnvVars.putAll(additionalEnvVars);
     }
-    args.add(0, "vagrant");
-    args.add(1, command);
 
-    if (this.getVagrantVm() != null && !this.getVagrantVm().isEmpty()) {
-      args.add(2, this.getVagrantVm());
-    }
-
-    this.log("Executing command :" + args.toString() + " in folder " + this.getContainingFolder().getRemote());
+    List<String> commandWithArgs = constructFullCommand(command, args);
+    this.log("Executing command :" + commandWithArgs.toString() + " in folder " + this.getContainingFolder().getRemote());
 
     Launcher.ProcStarter settings = launcher.launch();
-    settings.cmds(args);
+    settings.cmds(commandWithArgs);
     settings.envs(joinedEnvVars);
     settings.stdout(listener.getLogger());
     settings.stderr(listener.getLogger());
@@ -181,10 +175,22 @@ public class VagrantWrapper {
 
     Proc proc = settings.start();
     int exitCode = proc.join();
-    if (exitCode > 0) {
-      return false;
+    return exitCode <= 0;
+  }
+
+  private List<String> constructFullCommand(String command, List<String> args) {
+    List<String> commandWithArgs = new ArrayList<>();
+
+    commandWithArgs.add("vagrant");
+    commandWithArgs.add(command);
+
+    if (this.getVagrantVm() != null && !this.getVagrantVm().isEmpty()) {
+      commandWithArgs.add(this.getVagrantVm());
     }
-    return true;
+
+    commandWithArgs.addAll(args);
+
+    return commandWithArgs;
   }
 
   Boolean executeCommand(String command, List<String> args) throws IOException, InterruptedException {
